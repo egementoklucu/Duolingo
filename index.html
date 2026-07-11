@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duolingo Internal Debug Menu Documentation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Duolingo Brand Colors */
+            --duo-green: #58CC02;
+            --duo-green-shadow: #58a700;
+            --duo-blue: #1CB0F6;
+            --duo-yellow: #FFC800;
+            --duo-red: #FF4B4B;
+            --duo-purple: #CE82FF;
+            
+            /* Light Theme Defaults */
+            --bg-color: #ffffff;
+            --sidebar-bg: #f7f7f7;
+            --card-bg: #ffffff;
+            --text-main: #3c3c3c;
+            --text-muted: #777777;
+            --border-color: #e5e5e5;
+            --card-shadow: #e5e5e5;
+            --hover-bg: #f0f0f0;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Dark Theme Overrides */
+                --bg-color: #131F24;
+                --sidebar-bg: #202F36;
+                --card-bg: #202F36;
+                --text-main: #ffffff;
+                --text-muted: #afafaf;
+                --border-color: #37464F;
+                --card-shadow: #111a1f;
+                --hover-bg: #2a3d46;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 2px solid var(--border-color);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 20px 0;
+            z-index: 100;
+        }
+
+        .brand {
+            padding: 0 20px 20px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand i {
+            color: var(--duo-green);
+            font-size: 28px;
+        }
+
+        .brand h1 {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.2s;
+            gap: 12px;
+        }
+
+        .nav-link i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--duo-blue);
+            background-color: var(--hover-bg);
+            border-left: 4px solid var(--duo-blue);
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            padding: 40px;
+            max-width: 1400px;
+        }
+
+        .header-area {
+            margin-bottom: 40px;
+        }
+
+        .title-block h2 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .title-block p {
+            color: var(--text-muted);
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .search-container {
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            font-size: 16px;
+            font-weight: 600;
+            outline: none;
+            transition: border-color 0.2s;
+            box-shadow: 0 4px 0 var(--card-shadow);
+        }
+
+        .search-input:focus {
+            border-color: var(--duo-blue);
+        }
+
+        /* Section & Grid Styles */
+        .category-section {
+            margin-bottom: 50px;
+            scroll-margin-top: 40px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 0 var(--card-shadow);
+            transition: transform 0.1s, box-shadow 0.1s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 var(--card-shadow);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-main);
+            line-height: 1.3;
+        }
+
+        .card-badge {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 4px 8px;
+            border-radius: 8px;
+            background: var(--hover-bg);
+            color: var(--text-muted);
+            white-space: nowrap;
+            margin-left: 10px;
+        }
+
+        .card-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        /* Custom Colors for Badges */
+        .badge-ui { color: var(--duo-purple); background: rgba(206, 130, 255, 0.1); }
+        .badge-network { color: var(--duo-blue); background: rgba(28, 176, 246, 0.1); }
+        .badge-system { color: var(--duo-red); background: rgba(255, 75, 75, 0.1); }
+        .badge-monetization { color: var(--duo-yellow); background: rgba(255, 200, 0, 0.1); }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 18px;
+            font-weight: 700;
+            display: none;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+            .main-content { margin-left: 0; padding: 20px; }
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-wrench"></i>
+            <h1>Duo Internals</h1>
+        </div>
+        <a href="#ui-ux" class="nav-link"><i class="fa-solid fa-paint-brush"></i> UI, UX & Animations</a>
+        <a href="#session-content" class="nav-link"><i class="fa-solid fa-gamepad"></i> Session & Content</a>
+        <a href="#audio-media" class="nav-link"><i class="fa-solid fa-volume-up"></i> Audio & Haptics</a>
+        <a href="#user-social" class="nav-link"><i class="fa-solid fa-user-friends"></i> User & Social</a>
+        <a href="#gamification" class="nav-link"><i class="fa-solid fa-trophy"></i> Gamification & Rewards</a>
+        <a href="#monetization" class="nav-link"><i class="fa-solid fa-store"></i> Monetization & Promos</a>
+        <a href="#system-network" class="nav-link"><i class="fa-solid fa-cogs"></i> System & Network</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="header-area">
+            <div class="title-block">
+                <h2>Debug Menu Architecture</h2>
+                <p>Comprehensive technical documentation of internal developer flags, testing overrides, and diagnostic tools used by reverse engineers and core developers.</p>
+            </div>
+            <div class="search-container">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search features (e.g., 'JSON', 'Leak', 'XP')..." onkeyup="filterFeatures()">
+            </div>
+        </div>
+
+        <div id="noResults" class="no-results">
+            <i class="fa-solid fa-ghost" style="font-size: 48px; margin-bottom: 15px;"></i><br>
+            No debug features match your search.
+        </div>
+
+        <!-- CATEGORY: UI, UX & Animations -->
+        <section id="ui-ux" class="category-section">
+            <div class="category-header" style="color: var(--duo-purple);">
+                <i class="fa-solid fa-paint-brush"></i> UI, UX & Animations
+            </div>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Design guidelines</div>
+                        <div class="card-badge badge-ui">UI System</div>
+                    </div>
+                    <div class="card-desc">Loads an internal library of standard Duolingo UI components (buttons, typography, spacing) to ensure app-wide adherence to the core design system without navigating through actual app flows.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Picasso example</div>
+                        <div class="card-badge badge-ui">Renderer</div>
+                    </div>
+                    <div class="card-desc">Provides a sandbox for testing the Square `Picasso` library's image fetching, caching strategies, and placeholder rendering performance specifically on the host device.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Animation Tester</div>
+                        <div class="card-badge badge-ui">Renderer</div>
+                    </div>
+                    <div class="card-desc">A dedicated interface to load, loop, and stress-test custom animations outside of the main application flow, analyzing frame rate drops.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Preview Animations From S3</div>
+                        <div class="card-badge badge-network">Network UI</div>
+                    </div>
+                    <div class="card-desc">Overrides local asset fetching to stream unreleased or experimental animation assets directly from internal AWS S3 buckets rather than the bundled APK payload.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Lottie testing</div>
+                        <div class="card-badge badge-ui">Renderer</div>
+                    </div>
+                    <div class="card-desc">Renders JSON-based Adobe After Effects animations using the `lottie-android` library to verify exact frame rendering and vector layer bounds.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Loading Screen</div>
+                        <div class="card-badge badge-ui">State Override</div>
+                    </div>
+                    <div class="card-desc">Forces the app into an infinite loading state to test spinner alignment, thread blocking behavior, and conditional tip messaging.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Home Messages Settings</div>
+                        <div class="card-badge badge-ui">UI System</div>
+                    </div>
+                    <div class="card-desc">Configures the conditional pop-up cards seen on the home screen (streak warnings, updates) to test layout constraints and queue prioritization logic.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Session end screens</div>
+                        <div class="card-badge badge-ui">UI Flow</div>
+                    </div>
+                    <div class="card-desc">Allows developers to jump directly to the post-lesson summary screens, injecting mock data (XP gains, accuracy) to test rendering without playing a full lesson.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Compose Component Gallery</div>
+                        <div class="card-badge badge-ui">Jetpack</div>
+                    </div>
+                    <div class="card-desc">A specialized directory displaying all Jetpack Compose UI elements currently utilized in the app, acting as a live interactive style guide.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Compose Performance Debug Exercise</div>
+                        <div class="card-badge badge-system">Profiler</div>
+                    </div>
+                    <div class="card-desc">Runs localized rendering loops on Compose nodes to benchmark recomposition times and identify UI thread bottlenecks within specific widgets.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Modular Rive Debug</div>
+                        <div class="card-badge badge-ui">Animation Engine</div>
+                    </div>
+                    <div class="card-desc">Inspects and mutates state machines within `.riv` files, the engine used heavily for Duolingo's interactive and highly modular character reactions.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Widget debug</div>
+                        <div class="card-badge badge-ui">OS Integration</div>
+                    </div>
+                    <div class="card-desc">Triggers forced updates and renders mock data for Android Home Screen App Widgets to test `RemoteViews` layouts and pending intents.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">SDUI Widget debug</div>
+                        <div class="card-badge badge-network">Server-Driven</div>
+                    </div>
+                    <div class="card-desc">Parses and renders Server-Driven UI JSON payloads to test dynamic home screen modules constructed purely via backend schema directives rather than native code.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">App Icon debug</div>
+                        <div class="card-badge badge-ui">OS Integration</div>
+                    </div>
+                    <div class="card-desc">Interfaces with Android's `PackageManager` to test programmatic switching of the app icon aliases (e.g., activating the Streak Society or Super Duolingo app icons).</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CATEGORY: Session & Content Debugging -->
+        <section id="session-content" class="category-section">
+            <div class="category-header" style="color: var(--duo-green);">
+                <i class="fa-solid fa-gamepad"></i> Session & Content Debugging
+            </div>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Hardcoded sessions</div>
+                        <div class="card-badge">Data Override</div>
+                    </div>
+                    <div class="card-desc">Loads local, static JSON lesson files bypassing network requests entirely to test UI rendering of specific exercise combinations robustly.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Hardcoded story sessions</div>
+                        <div class="card-badge">Data Override</div>
+                    </div>
+                    <div class="card-desc">Bypasses backend dependencies to load static narrative nodes, enabling UI testing of the Stories feature without needing tree progression.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Start session from JSON URL</div>
+                        <div class="card-badge badge-network">Dynamic Load</div>
+                    </div>
+                    <div class="card-desc">Ingests a remote JSON payload to construct a learning session dynamically, useful for QA testing edge-case lesson schemas pushed to a staging server.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">No Health Session Start Variant</div>
+                        <div class="card-badge">State Override</div>
+                    </div>
+                    <div class="card-desc">Overrides the energy dependency check, allowing developers to test standard lesson flows even when the account's simulated health/hearts pool is zero.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Session Debug Settings</div>
+                        <div class="card-badge">Core Engine</div>
+                    </div>
+                    <div class="card-desc">Master configuration panel to inject custom parameters into learning sessions, such as forcing specific exercise types or tweaking grading leniency algorithms.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Lesson Coach Debug Options</div>
+                        <div class="card-badge">UI Flow</div>
+                    </div>
+                    <div class="card-desc">Configures the behavior of the "Coach" tooltips (characters popping up mid-lesson) to test triggering rules, dialogue thresholds, and animation states.</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Stories Settings</div>
+                        <div class="card-badge">Config</div>
+                    </div>
+                    <div class="card-desc">Exposes reading-comprehension specific parameters, such as playback speed limits, character voice assignments, and narrative branching logic.</div>
+                </div>
+                <div class="card">
+                    <div class="card-h
