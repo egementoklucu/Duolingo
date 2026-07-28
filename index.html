@@ -1,462 +1,332 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Duolingo Internal Debug Menu Documentation</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            /* Duolingo Brand Colors */
-            --duo-green: #58CC02;
-            --duo-green-shadow: #58a700;
-            --duo-blue: #1CB0F6;
-            --duo-yellow: #FFC800;
-            --duo-red: #FF4B4B;
-            --duo-purple: #CE82FF;
-            
-            /* Light Theme Defaults */
-            --bg-color: #ffffff;
-            --sidebar-bg: #f7f7f7;
-            --card-bg: #ffffff;
-            --text-main: #3c3c3c;
-            --text-muted: #777777;
-            --border-color: #e5e5e5;
-            --card-shadow: #e5e5e5;
-            --hover-bg: #f0f0f0;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                /* Dark Theme Overrides */
-                --bg-color: #131F24;
-                --sidebar-bg: #202F36;
-                --card-bg: #202F36;
-                --text-main: #ffffff;
-                --text-muted: #afafaf;
-                --border-color: #37464F;
-                --card-shadow: #111a1f;
-                --hover-bg: #2a3d46;
-            }
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Nunito', sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* Sidebar Styles */
-        .sidebar {
-            width: 280px;
-            background-color: var(--sidebar-bg);
-            border-right: 2px solid var(--border-color);
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            padding: 20px 0;
-            z-index: 100;
-        }
-
-        .brand {
-            padding: 0 20px 20px;
-            border-bottom: 2px solid var(--border-color);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .brand i {
-            color: var(--duo-green);
-            font-size: 28px;
-        }
-
-        .brand h1 {
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--text-main);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-weight: 700;
-            transition: all 0.2s;
-            gap: 12px;
-        }
-
-        .nav-link i {
-            width: 20px;
-            text-align: center;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            color: var(--duo-blue);
-            background-color: var(--hover-bg);
-            border-left: 4px solid var(--duo-blue);
-        }
-
-        /* Main Content Styles */
-        .main-content {
-            margin-left: 280px;
-            flex: 1;
-            padding: 40px;
-            max-width: 1400px;
-        }
-
-        .header-area {
-            margin-bottom: 40px;
-        }
-
-        .title-block h2 {
-            font-size: 32px;
-            font-weight: 800;
-            margin-bottom: 10px;
-        }
-
-        .title-block p {
-            color: var(--text-muted);
-            font-size: 16px;
-            line-height: 1.5;
-        }
-
-        .search-container {
-            margin-top: 20px;
-            position: relative;
-        }
-
-        .search-container i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 15px 15px 15px 45px;
-            border: 2px solid var(--border-color);
-            border-radius: 16px;
-            background-color: var(--card-bg);
-            color: var(--text-main);
-            font-size: 16px;
-            font-weight: 600;
-            outline: none;
-            transition: border-color 0.2s;
-            box-shadow: 0 4px 0 var(--card-shadow);
-        }
-
-        .search-input:focus {
-            border-color: var(--duo-blue);
-        }
-
-        /* Section & Grid Styles */
-        .category-section {
-            margin-bottom: 50px;
-            scroll-margin-top: 40px;
-        }
-
-        .category-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 24px;
-            font-weight: 800;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
-        }
-
-        /* Card Styles */
-        .card {
-            background-color: var(--card-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 0 var(--card-shadow);
-            transition: transform 0.1s, box-shadow 0.1s;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 var(--card-shadow);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
-        }
-
-        .card-title {
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--text-main);
-            line-height: 1.3;
-        }
-
-        .card-badge {
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            padding: 4px 8px;
-            border-radius: 8px;
-            background: var(--hover-bg);
-            color: var(--text-muted);
-            white-space: nowrap;
-            margin-left: 10px;
-        }
-
-        .card-desc {
-            font-size: 14px;
-            color: var(--text-muted);
-            line-height: 1.5;
-            flex: 1;
-        }
-
-        /* Custom Colors for Badges */
-        .badge-ui { color: var(--duo-purple); background: rgba(206, 130, 255, 0.1); }
-        .badge-network { color: var(--duo-blue); background: rgba(28, 176, 246, 0.1); }
-        .badge-system { color: var(--duo-red); background: rgba(255, 75, 75, 0.1); }
-        .badge-monetization { color: var(--duo-yellow); background: rgba(255, 200, 0, 0.1); }
-
-        .no-results {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-            font-size: 18px;
-            font-weight: 700;
-            display: none;
-        }
-
-        @media (max-width: 900px) {
-            .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
-            .main-content { margin-left: 0; padding: 20px; }
-            .grid { grid-template-columns: 1fr; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#10231d">
+  <meta name="description" content="Bütçeni yönet, seçimlerini yap ve kendi hayat hikâyeni yaz.">
+  <title>Yarın — Yaşam Simülasyonu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand" aria-label="Yarın ana sayfa">
+        <span class="brand-mark"><i data-lucide="sprout"></i></span>
+        <span>yarın<span class="brand-dot">.</span></span>
+      </div>
 
-    <!-- Sidebar Navigation -->
-    <nav class="sidebar">
-        <div class="brand">
-            <i class="fa-solid fa-wrench"></i>
-            <h1>Duo Internals</h1>
+      <nav class="main-nav" aria-label="Ana menü">
+        <p class="nav-label">OYUN</p>
+        <a class="nav-item active" href="#overview"><i data-lucide="layout-dashboard"></i><span>Genel Bakış</span></a>
+        <a class="nav-item" href="#wellbeing"><i data-lucide="heart-pulse"></i><span>İyi Yaşam</span></a>
+        <a class="nav-item" href="#actions"><i data-lucide="sparkles"></i><span>Eylemler</span></a>
+        <a class="nav-item" href="#assets"><i data-lucide="package-open"></i><span>Varlıklarım</span><span class="nav-count" id="inventoryCount">0</span></a>
+        <p class="nav-label nav-label-second">YÖNETİM</p>
+        <button class="nav-item nav-button" id="financeNav"><i data-lucide="wallet-cards"></i><span>Finans</span></button>
+        <button class="nav-item nav-button" id="apiLogButton"><i data-lucide="braces"></i><span>API Günlüğü</span></button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="profile-card">
+          <div class="profile-avatar" id="profileInitial">D</div>
+          <div class="profile-copy">
+            <strong id="profileName">Deniz</strong>
+            <span><span id="profileAge">18</span> yaş · <span id="profileJob">İşsiz</span></span>
+          </div>
+          <button class="icon-button dark-icon" id="newGameSide" aria-label="Oyunu düzenle"><i data-lucide="settings-2"></i></button>
         </div>
-        <a href="#ui-ux" class="nav-link"><i class="fa-solid fa-paint-brush"></i> UI, UX & Animations</a>
-        <a href="#session-content" class="nav-link"><i class="fa-solid fa-gamepad"></i> Session & Content</a>
-        <a href="#audio-media" class="nav-link"><i class="fa-solid fa-volume-up"></i> Audio & Haptics</a>
-        <a href="#user-social" class="nav-link"><i class="fa-solid fa-user-friends"></i> User & Social</a>
-        <a href="#gamification" class="nav-link"><i class="fa-solid fa-trophy"></i> Gamification & Rewards</a>
-        <a href="#monetization" class="nav-link"><i class="fa-solid fa-store"></i> Monetization & Promos</a>
-        <a href="#system-network" class="nav-link"><i class="fa-solid fa-cogs"></i> System & Network</a>
-    </nav>
+        <p class="save-status"><span></span> Oyun otomatik kaydediliyor</p>
+      </div>
+    </aside>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="header-area">
-            <div class="title-block">
-                <h2>Debug Menu Architecture</h2>
-                <p>Comprehensive technical documentation of internal developer flags, testing overrides, and diagnostic tools used by reverse engineers and core developers.</p>
+    <div class="mobile-bar">
+      <button class="icon-button" id="menuButton" aria-label="Menüyü aç"><i data-lucide="menu"></i></button>
+      <div class="brand mobile-brand"><span class="brand-mark"><i data-lucide="sprout"></i></span><span>yarın<span class="brand-dot">.</span></span></div>
+      <button class="icon-button" id="mobileNewGame" aria-label="Yeni oyun"><i data-lucide="settings-2"></i></button>
+    </div>
+
+    <main class="main-content" id="overview">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="greetingEyebrow">28 Temmuz, Salı</p>
+          <h1>Günaydın, <span id="headerName">Deniz</span> <span class="wave">👋</span></h1>
+          <p class="header-subtitle">Bugünkü seçimlerin yarınını şekillendirir.</p>
+        </div>
+        <div class="header-actions">
+          <button class="icon-button notification-button" id="eventJump" aria-label="Bildirimler">
+            <i data-lucide="bell"></i><span class="notification-dot" id="notificationDot"></span>
+          </button>
+          <button class="secondary-button" id="newGameButton"><i data-lucide="rotate-ccw"></i> Yeni oyun</button>
+        </div>
+      </header>
+
+      <section class="summary-grid" aria-label="Finans özeti">
+        <article class="balance-card">
+          <div class="balance-head">
+            <div>
+              <p class="card-kicker light-kicker">KULLANILABİLİR BAKİYE</p>
+              <div class="balance-value"><span id="balanceAmount">25.000</span><span class="balance-currency" id="balanceCurrency">₺</span></div>
             </div>
-            <div class="search-container">
-                <i class="fa-solid fa-search"></i>
-                <input type="text" id="searchInput" class="search-input" placeholder="Search features (e.g., 'JSON', 'Leak', 'XP')..." onkeyup="filterFeatures()">
+            <span class="wallet-icon"><i data-lucide="wallet"></i></span>
+          </div>
+          <div class="balance-bottom">
+            <div class="balance-metric">
+              <span>Bu ay gelir</span>
+              <strong class="positive" id="monthIncome">+0 ₺</strong>
             </div>
+            <div class="balance-divider"></div>
+            <div class="balance-metric">
+              <span>Bu ay harcama</span>
+              <strong id="monthSpend">0 ₺</strong>
+            </div>
+            <svg class="sparkline" viewBox="0 0 180 54" role="img" aria-label="Bakiye eğilimi">
+              <path class="spark-area" d="M2,47 C20,42 30,43 44,34 C58,25 67,36 81,28 C97,19 103,27 118,17 C135,7 145,16 178,5 L178,54 L2,54 Z"></path>
+              <path class="spark-line" d="M2,47 C20,42 30,43 44,34 C58,25 67,36 81,28 C97,19 103,27 118,17 C135,7 145,16 178,5"></path>
+            </svg>
+          </div>
+        </article>
+
+        <article class="summary-card salary-card">
+          <div class="summary-icon mint"><i data-lucide="calendar-check-2"></i></div>
+          <div class="summary-card-copy">
+            <p>SONRAKİ MAAŞ</p>
+            <strong id="salaryAmount">12.500 ₺</strong>
+            <span><b id="salaryDays">18 gün</b> sonra hesabında</span>
+          </div>
+          <div class="progress-track tiny"><span id="salaryProgress"></span></div>
+        </article>
+
+        <article class="summary-card housing-card">
+          <div class="summary-icon peach"><i data-lucide="house"></i></div>
+          <div class="summary-card-copy">
+            <p>YAŞAM DURUMU</p>
+            <strong id="housingStatus">Evsiz</strong>
+            <span id="vehicleStatus">Araç yok · İşsiz</span>
+          </div>
+          <button class="small-link" data-action="buy_house">Bir ev bul <i data-lucide="arrow-up-right"></i></button>
+        </article>
+      </section>
+
+      <div class="content-layout">
+        <div class="primary-column">
+          <section class="panel wellbeing-panel" id="wellbeing">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">GÜNLÜK DENGE</p>
+                <h2>Bugün nasıl hissediyorsun?</h2>
+              </div>
+              <div class="wellbeing-score"><span id="wellbeingScore">78</span><small>/100</small></div>
+            </div>
+            <div class="stats-grid" id="statsGrid"></div>
+            <div class="wellbeing-note" id="wellbeingNote">
+              <i data-lucide="circle-check-big"></i>
+              <span><strong>Gayet iyi gidiyorsun!</strong> Tüm ihtiyaçların dengeli görünüyor.</span>
+            </div>
+          </section>
+
+          <section class="actions-section" id="actions">
+            <div class="section-heading compact-heading">
+              <div>
+                <p class="section-kicker">HAYATINI YÖNET</p>
+                <h2>Şimdi ne yapmak istersin?</h2>
+              </div>
+              <span class="action-hint"><i data-lucide="mouse-pointer-click"></i> Bir eylem seç</span>
+            </div>
+            <div class="actions-grid">
+              <button class="action-card" data-action="eat">
+                <span class="action-icon action-yellow"><i data-lucide="utensils"></i></span>
+                <span class="action-copy"><strong>Yemek ye</strong><small>Açlık +25</small></span>
+                <span class="action-arrow"><i data-lucide="chevron-right"></i></span>
+              </button>
+              <button class="action-card" data-action="drink">
+                <span class="action-icon action-blue"><i data-lucide="glass-water"></i></span>
+                <span class="action-copy"><strong>Su iç</strong><small>Susuzluk +30</small></span>
+                <span class="action-arrow"><i data-lucide="chevron-right"></i></span>
+              </button>
+              <button class="action-card" data-action="fun">
+                <span class="action-icon action-purple"><i data-lucide="gamepad-2"></i></span>
+                <span class="action-copy"><strong>Biraz eğlen</strong><small>Eğlence +22</small></span>
+                <span class="action-arrow"><i data-lucide="chevron-right"></i></span>
+              </button>
+              <button class="action-card" data-action="rest">
+                <span class="action-icon action-green"><i data-lucide="bed-double"></i></span>
+                <span class="action-copy"><strong>Dinlen</strong><small>Enerji +25</small></span>
+                <span class="action-arrow"><i data-lucide="chevron-right"></i></span>
+              </button>
+              <button class="action-card" data-action="find_job">
+                <span class="action-icon action-coral"><i data-lucide="briefcase-business"></i></span>
+                <span class="action-copy"><strong>İş ara</strong><small>Kariyerine başla</small></span>
+                <span class="action-arrow"><i data-lucide="chevron-right"></i></span>
+              </button>
+              <button class="action-card" data-action="healthcare">
+                <span class="action-icon action-red"><i data-lucide="stethoscope"></i></span>
+                <span class="action-copy"><strong>Doktora git</strong><small>Sağlık +20</small></span>
+                <span class="action-arrow"><i data-lucide="chevron-right"></i></span>
+              </button>
+              <button class="action-card property-action" data-action="buy_house">
+                <span class="action-icon action-navy"><i data-lucide="house-plus"></i></span>
+                <span class="action-copy"><strong>Ev satın al</strong><small>Piyasayı araştır</small></span>
+                <span class="action-arrow"><i data-lucide="chevron-right"></i></span>
+              </button>
+              <button class="action-card property-action" data-action="buy_car">
+                <span class="action-icon action-teal"><i data-lucide="car-front"></i></span>
+                <span class="action-copy"><strong>Araba satın al</strong><small>Yeni bir araç bul</small></span>
+                <span class="action-arrow"><i data-lucide="chevron-right"></i></span>
+              </button>
+            </div>
+          </section>
+
+          <section class="panel assets-panel" id="assets">
+            <div class="section-heading compact-heading">
+              <div>
+                <p class="section-kicker">SAHİP OLDUKLARIN</p>
+                <h2>Varlıklarım</h2>
+              </div>
+              <span class="soft-badge" id="assetBadge">0 varlık</span>
+            </div>
+            <div class="inventory-grid" id="inventoryGrid"></div>
+          </section>
         </div>
 
-        <div id="noResults" class="no-results">
-            <i class="fa-solid fa-ghost" style="font-size: 48px; margin-bottom: 15px;"></i><br>
-            No debug features match your search.
+        <aside class="right-column">
+          <section class="panel time-panel">
+            <div class="time-header">
+              <div>
+                <p class="section-kicker">OYUN TAKVİMİ</p>
+                <h2>Zamanı ilerlet</h2>
+              </div>
+              <span class="time-icon"><i data-lucide="hourglass"></i></span>
+            </div>
+            <div class="date-display">
+              <span class="date-day" id="dateDay">28</span>
+              <span class="date-copy"><strong id="dateMonth">Temmuz</strong><small id="dateYearWeekday">2026 · Salı</small></span>
+            </div>
+            <div class="time-actions">
+              <button data-time-unit="day"><i data-lucide="sun"></i><span>Sonraki gün</span><small>+1 gün</small></button>
+              <button data-time-unit="week"><i data-lucide="calendar-days"></i><span>Sonraki hafta</span><small>+7 gün</small></button>
+              <button data-time-unit="month"><i data-lucide="calendar-range"></i><span>Sonraki ay</span><small>+1 ay</small></button>
+              <button data-time-unit="year"><i data-lucide="cake-slice"></i><span>Sonraki yıl</span><small>+1 yaş</small></button>
+            </div>
+            <button class="undo-button" id="undoButton" disabled><i data-lucide="history"></i><span>Son zaman ilerlemesini geri al</span></button>
+            <p class="undo-help">İstatistikler ve yaşlanma geri alınamaz.</p>
+          </section>
+
+          <section class="panel event-panel" id="eventPanel">
+            <div class="section-heading compact-heading event-heading">
+              <div>
+                <p class="section-kicker">HAYAT AKIŞI</p>
+                <h2>Son gelişmeler</h2>
+              </div>
+              <button class="icon-button tiny-button" id="clearEvents" aria-label="Okundu olarak işaretle"><i data-lucide="check-check"></i></button>
+            </div>
+            <div class="event-list" id="eventList"></div>
+          </section>
+
+          <section class="panel budget-panel">
+            <div class="budget-head">
+              <div><p class="section-kicker">AYLIK BÜTÇE</p><h3>Harcama kontrolü</h3></div>
+              <span id="budgetPercent">%0</span>
+            </div>
+            <div class="progress-track budget-track"><span id="budgetBar"></span></div>
+            <div class="budget-copy"><span id="budgetSpent">0 ₺ harcandı</span><strong id="budgetRemaining">25.000 ₺ kaldı</strong></div>
+          </section>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div class="sidebar-scrim" id="sidebarScrim"></div>
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+
+  <dialog class="modal setup-modal" id="setupModal">
+    <form method="dialog" id="setupForm" novalidate>
+      <div class="modal-top illustration-top">
+        <button class="modal-close" value="cancel" aria-label="Kapat"><i data-lucide="x"></i></button>
+        <div class="setup-illustration" aria-hidden="true">
+          <span class="illustration-sun"></span>
+          <span class="illustration-building one"></span><span class="illustration-building two"></span>
+          <span class="illustration-person"><i data-lucide="person-standing"></i></span>
+          <span class="illustration-plant"><i data-lucide="sprout"></i></span>
         </div>
+      </div>
+      <div class="modal-body setup-body">
+        <p class="section-kicker">YENİ BİR BAŞLANGIÇ</p>
+        <h2>Hayatını nasıl kurmak istersin?</h2>
+        <p class="modal-intro">18 yaşında, evsiz ve işsiz başlıyorsun. İlk bütçeni belirle; gerisi senin seçimlerin.</p>
+        <div class="form-row two-column">
+          <label><span>Adın</span><input id="setupName" name="name" type="text" maxlength="24" value="Deniz" required></label>
+          <label><span>Para birimi</span><select id="setupCurrency" name="currency"><option value="TRY">Türk Lirası (₺)</option><option value="USD">Amerikan Doları ($)</option><option value="EUR">Euro (€)</option></select></label>
+        </div>
+        <div class="form-row two-column">
+          <label><span>Başlangıç bütçesi</span><div class="input-with-symbol"><input id="setupBudget" name="budget" type="number" min="0" step="100" value="25000" required><b class="currency-symbol">₺</b></div></label>
+          <label><span>Aylık maaş</span><div class="input-with-symbol"><input id="setupSalary" name="salary" type="number" min="0" step="100" value="12500" required><b class="currency-symbol">₺</b></div></label>
+        </div>
+        <div class="setup-fact"><i data-lucide="info"></i><span>Maaşın her ayın <strong>15. günü</strong> otomatik olarak hesabına yatırılır.</span></div>
+      </div>
+      <div class="modal-footer">
+        <button class="text-button" value="cancel">Vazgeç</button>
+        <button class="primary-button" id="startGameButton" value="default"><span>Yeni hayata başla</span><i data-lucide="arrow-right"></i></button>
+      </div>
+    </form>
+  </dialog>
 
-        <!-- CATEGORY: UI, UX & Animations -->
-        <section id="ui-ux" class="category-section">
-            <div class="category-header" style="color: var(--duo-purple);">
-                <i class="fa-solid fa-paint-brush"></i> UI, UX & Animations
-            </div>
-            <div class="grid">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Design guidelines</div>
-                        <div class="card-badge badge-ui">UI System</div>
-                    </div>
-                    <div class="card-desc">Loads an internal library of standard Duolingo UI components (buttons, typography, spacing) to ensure app-wide adherence to the core design system without navigating through actual app flows.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Picasso example</div>
-                        <div class="card-badge badge-ui">Renderer</div>
-                    </div>
-                    <div class="card-desc">Provides a sandbox for testing the Square `Picasso` library's image fetching, caching strategies, and placeholder rendering performance specifically on the host device.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Animation Tester</div>
-                        <div class="card-badge badge-ui">Renderer</div>
-                    </div>
-                    <div class="card-desc">A dedicated interface to load, loop, and stress-test custom animations outside of the main application flow, analyzing frame rate drops.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Preview Animations From S3</div>
-                        <div class="card-badge badge-network">Network UI</div>
-                    </div>
-                    <div class="card-desc">Overrides local asset fetching to stream unreleased or experimental animation assets directly from internal AWS S3 buckets rather than the bundled APK payload.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Lottie testing</div>
-                        <div class="card-badge badge-ui">Renderer</div>
-                    </div>
-                    <div class="card-desc">Renders JSON-based Adobe After Effects animations using the `lottie-android` library to verify exact frame rendering and vector layer bounds.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Loading Screen</div>
-                        <div class="card-badge badge-ui">State Override</div>
-                    </div>
-                    <div class="card-desc">Forces the app into an infinite loading state to test spinner alignment, thread blocking behavior, and conditional tip messaging.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Home Messages Settings</div>
-                        <div class="card-badge badge-ui">UI System</div>
-                    </div>
-                    <div class="card-desc">Configures the conditional pop-up cards seen on the home screen (streak warnings, updates) to test layout constraints and queue prioritization logic.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Session end screens</div>
-                        <div class="card-badge badge-ui">UI Flow</div>
-                    </div>
-                    <div class="card-desc">Allows developers to jump directly to the post-lesson summary screens, injecting mock data (XP gains, accuracy) to test rendering without playing a full lesson.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Compose Component Gallery</div>
-                        <div class="card-badge badge-ui">Jetpack</div>
-                    </div>
-                    <div class="card-desc">A specialized directory displaying all Jetpack Compose UI elements currently utilized in the app, acting as a live interactive style guide.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Compose Performance Debug Exercise</div>
-                        <div class="card-badge badge-system">Profiler</div>
-                    </div>
-                    <div class="card-desc">Runs localized rendering loops on Compose nodes to benchmark recomposition times and identify UI thread bottlenecks within specific widgets.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Modular Rive Debug</div>
-                        <div class="card-badge badge-ui">Animation Engine</div>
-                    </div>
-                    <div class="card-desc">Inspects and mutates state machines within `.riv` files, the engine used heavily for Duolingo's interactive and highly modular character reactions.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Widget debug</div>
-                        <div class="card-badge badge-ui">OS Integration</div>
-                    </div>
-                    <div class="card-desc">Triggers forced updates and renders mock data for Android Home Screen App Widgets to test `RemoteViews` layouts and pending intents.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">SDUI Widget debug</div>
-                        <div class="card-badge badge-network">Server-Driven</div>
-                    </div>
-                    <div class="card-desc">Parses and renders Server-Driven UI JSON payloads to test dynamic home screen modules constructed purely via backend schema directives rather than native code.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">App Icon debug</div>
-                        <div class="card-badge badge-ui">OS Integration</div>
-                    </div>
-                    <div class="card-desc">Interfaces with Android's `PackageManager` to test programmatic switching of the app icon aliases (e.g., activating the Streak Society or Super Duolingo app icons).</div>
-                </div>
-            </div>
-        </section>
+  <dialog class="modal purchase-modal" id="purchaseModal">
+    <form method="dialog" id="purchaseForm" novalidate>
+      <div class="modal-header">
+        <span class="modal-header-icon" id="purchaseIcon"><i data-lucide="house-plus"></i></span>
+        <div><p class="section-kicker">YENİ BİR VARLIK</p><h2 id="purchaseTitle">Nasıl bir ev arıyorsun?</h2></div>
+        <button class="modal-close" value="cancel" aria-label="Kapat"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body" id="purchaseFields"></div>
+      <div class="modal-footer">
+        <button class="text-button" value="cancel">Vazgeç</button>
+        <button class="primary-button" id="researchPriceButton" value="default"><span>Fiyatı araştır</span><i data-lucide="search"></i></button>
+      </div>
+    </form>
+  </dialog>
 
-        <!-- CATEGORY: Session & Content Debugging -->
-        <section id="session-content" class="category-section">
-            <div class="category-header" style="color: var(--duo-green);">
-                <i class="fa-solid fa-gamepad"></i> Session & Content Debugging
-            </div>
-            <div class="grid">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Hardcoded sessions</div>
-                        <div class="card-badge">Data Override</div>
-                    </div>
-                    <div class="card-desc">Loads local, static JSON lesson files bypassing network requests entirely to test UI rendering of specific exercise combinations robustly.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Hardcoded story sessions</div>
-                        <div class="card-badge">Data Override</div>
-                    </div>
-                    <div class="card-desc">Bypasses backend dependencies to load static narrative nodes, enabling UI testing of the Stories feature without needing tree progression.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Start session from JSON URL</div>
-                        <div class="card-badge badge-network">Dynamic Load</div>
-                    </div>
-                    <div class="card-desc">Ingests a remote JSON payload to construct a learning session dynamically, useful for QA testing edge-case lesson schemas pushed to a staging server.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">No Health Session Start Variant</div>
-                        <div class="card-badge">State Override</div>
-                    </div>
-                    <div class="card-desc">Overrides the energy dependency check, allowing developers to test standard lesson flows even when the account's simulated health/hearts pool is zero.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Session Debug Settings</div>
-                        <div class="card-badge">Core Engine</div>
-                    </div>
-                    <div class="card-desc">Master configuration panel to inject custom parameters into learning sessions, such as forcing specific exercise types or tweaking grading leniency algorithms.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Lesson Coach Debug Options</div>
-                        <div class="card-badge">UI Flow</div>
-                    </div>
-                    <div class="card-desc">Configures the behavior of the "Coach" tooltips (characters popping up mid-lesson) to test triggering rules, dialogue thresholds, and animation states.</div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Stories Settings</div>
-                        <div class="card-badge">Config</div>
-                    </div>
-                    <div class="card-desc">Exposes reading-comprehension specific parameters, such as playback speed limits, character voice assignments, and narrative branching logic.</div>
-                </div>
-                <div class="card">
-                    <div class="card-h
+  <dialog class="modal price-modal" id="priceModal">
+    <form method="dialog" id="priceForm" novalidate>
+      <div class="modal-header">
+        <span class="modal-header-icon research-icon"><i data-lucide="bot"></i></span>
+        <div><p class="section-kicker">YAPAY ZEKA FİYAT ARAŞTIRMASI</p><h2>Piyasa fiyatı gerekiyor</h2></div>
+        <button class="modal-close" value="cancel" aria-label="Kapat"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-intro price-intro">Bu varlığı satın almak için güncel piyasa fiyatını ikinci bir yapay zekadan öğrenebilirsin.</p>
+        <label class="prompt-label"><span>Oluşturulan fiyat promptu</span><textarea id="pricePrompt" readonly></textarea></label>
+        <button class="copy-button" id="copyPromptButton" type="button"><i data-lucide="copy"></i><span>Promptu kopyala</span></button>
+        <div class="prompt-divider"><span>FİYATI ALDIKTAN SONRA</span></div>
+        <label><span id="priceInputLabel">Bulduğun fiyat (₺)</span><div class="input-with-symbol price-input-wrap"><input id="marketPriceInput" type="number" min="1" step="1" placeholder="Örn. 5.000.000" required><b id="marketCurrencySymbol">₺</b></div></label>
+        <p class="balance-available"><i data-lucide="wallet"></i> Kullanılabilir bakiye: <strong id="priceBalance">25.000 ₺</strong></p>
+      </div>
+      <div class="modal-footer">
+        <button class="text-button" value="cancel">Daha sonra</button>
+        <button class="primary-button" id="confirmPurchaseButton" value="default"><span>Satın al</span><i data-lucide="shopping-bag"></i></button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal api-modal" id="apiModal">
+    <div class="modal-header">
+      <span class="modal-header-icon api-icon"><i data-lucide="braces"></i></span>
+      <div><p class="section-kicker">GELİŞTİRİCİ ARAÇLARI</p><h2>Son API işlemi</h2></div>
+      <button class="modal-close" id="closeApiModal" aria-label="Kapat"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body api-body">
+      <div class="api-note"><i data-lucide="circle-dot-dashed"></i><span>Arayüzdeki her eylem JSON isteğine çevrilir ve simülasyon motoru tarafından işlenir.</span></div>
+      <div class="api-tabs"><button class="active" data-api-tab="request">İstek</button><button data-api-tab="response">Yanıt</button></div>
+      <pre id="apiCode"></pre>
+      <button class="copy-button api-copy" id="copyApiButton"><i data-lucide="copy"></i><span>JSON'u kopyala</span></button>
+    </div>
+  </dialog>
+
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <script src="simulation.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
